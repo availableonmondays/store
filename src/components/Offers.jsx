@@ -134,7 +134,7 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
                                     <div className="flex flex-col md:flex-row gap-6 relative z-10">
                                         <div className="w-full md:w-40 h-40 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
                                             {offer.image ? (
-                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" />
                                             ) : (
                                                 <span className="text-zinc-700 text-xs">No Image</span>
                                             )}
@@ -281,16 +281,14 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
                                                 <img
                                                     src={offer.image}
                                                     alt={offer.title}
-                                                    className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-500"
+                                                    className="w-full h-full object-contain"
+                                                    loading="lazy"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-zinc-700">No Image</div>
                                             )}
 
-                                            {/* Category Tag */}
-                                            <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/60 backdrop-blur text-[10px] font-medium uppercase tracking-wider text-zinc-400 rounded-lg">
-                                                {offer.category || 'Product'}
-                                            </div>
+                                            {/* Category Tag removed from image - moving to details */}
 
                                             {/* Quick Add Button */}
                                             <motion.button
@@ -318,20 +316,9 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
 
                                         {/* Content */}
                                         <div className="p-5">
-                                            <h4 className="text-base font-semibold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
+                                            <h4 className="text-base font-semibold text-white mb-2 line-clamp-2 transition-colors">
                                                 {offer.title}
                                             </h4>
-
-                                            {offer.specs && (
-                                                <ul className="text-[11px] text-zinc-500 space-y-1 mb-4">
-                                                    {offer.specs.split('\n').slice(0, 2).map((spec, i) => (
-                                                        <li key={i} className="flex items-center gap-1.5">
-                                                            <span className="w-1 h-1 bg-red-600 rounded-full" />
-                                                            {spec}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
 
                                             <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                                 <div>
@@ -361,102 +348,87 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
                     >
                         <div
                             onClick={() => setSelectedProduct(null)}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            transition={{ type: 'spring', damping: 25 }}
-                            className="bg-[#0a0a0a] w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 shadow-2xl relative z-10 grid grid-cols-1 md:grid-cols-2"
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl relative z-10 grid grid-cols-1 md:grid-cols-2 text-black"
                         >
                             <button
                                 onClick={() => setSelectedProduct(null)}
-                                className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                                className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
                             >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M18 6L6 18M6 6l12 12" />
                                 </svg>
                             </button>
 
-                            {/* Image */}
-                            <div className="bg-gradient-to-b from-white/[0.02] to-transparent p-12 flex items-center justify-center">
+                            {/* Image Section */}
+                            <div className="bg-white p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
                                 {selectedProduct.image && (
-                                    <motion.img
-                                        initial={{ scale: 0.8 }}
-                                        animate={{ scale: 1 }}
+                                    <img
                                         src={selectedProduct.image}
                                         alt={selectedProduct.title}
-                                        className="max-w-full max-h-[50vh] object-contain drop-shadow-2xl"
+                                        className="max-w-full max-h-[50vh] object-contain"
                                     />
                                 )}
                             </div>
 
-                            {/* Details */}
-                            <div className="p-10 flex flex-col border-l border-white/5">
-                                <div className="inline-flex items-center gap-2 mb-4">
-                                    <span className="px-3 py-1 bg-red-600/10 text-red-500 text-xs font-bold uppercase rounded-full tracking-wider">
-                                        {selectedProduct.category || 'Product'}
-                                    </span>
-                                </div>
-
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+                            {/* Details Section - Custom Design */}
+                            <div className="p-10 flex flex-col font-sans">
+                                {/* Title */}
+                                <h1 className="text-3xl font-normal text-black mb-4">
                                     {selectedProduct.title}
-                                </h2>
+                                </h1>
 
-                                <div className="flex-1 space-y-6">
-                                    <div className="pb-6 border-b border-white/5">
-                                        <p className="text-5xl font-black text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                                            {formatPrice(selectedProduct.price)} <span className="text-2xl text-red-500">KM</span>
-                                        </p>
-                                        <p className="text-xs text-zinc-500 mt-2">Includes VAT • 2 Year Warranty</p>
-                                    </div>
-
-                                    {selectedProduct.description && (
-                                        <p className="text-zinc-400 leading-relaxed">{selectedProduct.description}</p>
-                                    )}
-
-                                    {selectedProduct.specs && (
-                                        <div className="bg-white/[0.02] rounded-xl p-5 border border-white/5">
-                                            <h4 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4">Specifications</h4>
-                                            <ul className="space-y-2">
-                                                {selectedProduct.specs.split('\n').map((spec, i) => (
-                                                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
-                                                        <span className="w-1.5 h-1.5 mt-2 bg-red-500 rounded-full flex-shrink-0" />
-                                                        {spec}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
+                                {/* Meta Row */}
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 mb-6">
+                                    <span className="font-bold text-black">Kategorija: <span className="font-normal text-gray-600">{selectedProduct.category || 'N/A'}</span></span>
+                                    <span className="font-bold text-black">SKU: <span className="font-normal text-gray-600">{selectedProduct._id.slice(0, 6)}</span></span>
+                                    <span className="font-bold text-black">Garancija: <span className="font-normal text-gray-600">{selectedProduct.warranty || '1 godina'}</span></span>
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-white/5 flex gap-4">
-                                    <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                {/* Availability Check */}
+                                <div className="flex items-center gap-2 text-sm text-black mb-8 pb-8 border-b border-gray-100">
+                                    <span>Potrebna provjera dostupnosti</span>
+                                    <div className="w-4 h-4 rounded-full bg-orange-400 text-white flex items-center justify-center text-[10px] font-bold">?</div>
+                                </div>
+
+                                {/* Price */}
+                                <div className="mb-8">
+                                    <p className="text-5xl font-bold text-[#dc2626] tracking-tight">
+                                        {formatPrice(selectedProduct.price)} KM
+                                    </p>
+                                    <p className="text-gray-500 mt-1 text-sm">
+                                        (Cijena sa popustom za gotovinsko plaćanje)
+                                    </p>
+                                </div>
+
+                                {/* Specs with Blue Bullets */}
+                                {selectedProduct.specs && (
+                                    <div className="space-y-3 mb-10">
+                                        {selectedProduct.specs.split('\n').map((spec, i) => (
+                                            <div key={i} className="flex items-start gap-3">
+                                                <div className="w-2 h-2 mt-2 rounded-full bg-[#0ea5e9] flex-shrink-0" />
+                                                <span className="text-gray-600">{spec}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Buttons */}
+                                <div className="mt-auto flex gap-4">
+                                    <button
                                         onClick={(e) => {
                                             handleAddToCart(e, selectedProduct);
                                             setSelectedProduct(null);
                                         }}
-                                        className="flex-1 btn-primary py-4 rounded-xl font-bold tracking-wider flex items-center justify-center gap-2"
+                                        className="flex-1 bg-black text-white py-4 rounded-lg font-bold text-lg hover:bg-zinc-800 transition-colors uppercase tracking-wider"
                                     >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <circle cx="9" cy="21" r="1" />
-                                            <circle cx="20" cy="21" r="1" />
-                                            <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                                        </svg>
-                                        <span>Add to Cart</span>
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:border-red-500/30 transition-colors"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                                        </svg>
-                                    </motion.button>
+                                        Add to Cart
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

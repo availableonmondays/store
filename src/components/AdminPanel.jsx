@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCategories, onClose, onLogout }) => {
     const [activeTab, setActiveTab] = useState('add');
-    const [newOffer, setNewOffer] = useState({ title: '', description: '', price: '', image: '', category: '', specs: '', isHotDeal: false });
+    const [newOffer, setNewOffer] = useState({ title: '', description: '', price: '', image: '', category: '', specs: '', warranty: '', isHotDeal: false });
     const [newCategory, setNewCategory] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -34,7 +34,7 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
         onAddOffer({
             ...newOffer
         });
-        setNewOffer({ title: '', description: '', price: '', image: '', category: '', specs: '', isHotDeal: false });
+        setNewOffer({ title: '', description: '', price: '', image: '', category: '', specs: '', warranty: '', isHotDeal: false });
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };
@@ -185,6 +185,16 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                         <option key={cat} value={cat}>{cat}</option>
                                                     ))}
                                                 </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Warranty</label>
+                                                <input
+                                                    type="text"
+                                                    value={newOffer.warranty}
+                                                    onChange={(e) => setNewOffer({ ...newOffer, warranty: e.target.value })}
+                                                    className="input-field"
+                                                    placeholder="e.g. 1 year"
+                                                />
                                             </div>
                                             <div className="flex items-end">
                                                 <label className={`flex items-center justify-center gap-3 w-full h-[52px] rounded-xl cursor-pointer transition-all border ${newOffer.isHotDeal

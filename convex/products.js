@@ -21,6 +21,7 @@ export const add = mutation({
         image: v.optional(v.string()),
         category: v.optional(v.string()),
         specs: v.optional(v.string()),
+        warranty: v.optional(v.string()),
         isHotDeal: v.boolean(),
     },
     handler: async (ctx, args) => {
@@ -31,6 +32,7 @@ export const add = mutation({
             image: args.image || "",
             category: args.category || "",
             specs: args.specs || "",
+            warranty: args.warranty || "1 godina",
             isHotDeal: args.isHotDeal,
         });
         return productId;

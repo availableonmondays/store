@@ -9,6 +9,7 @@ export default defineSchema({
         image: v.optional(v.string()),
         category: v.optional(v.string()),
         specs: v.optional(v.string()),
+        warranty: v.optional(v.string()),
         isHotDeal: v.boolean(),
     }),
 });
