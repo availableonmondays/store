@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCategories, onClose, onLogout }) => {
     const [activeTab, setActiveTab] = useState('add');
-    const [newOffer, setNewOffer] = useState({ title: '', description: '', price: '', image: '', category: '', specs: '', warranty: '', isHotDeal: false });
+    const [newOffer, setNewOffer] = useState({ title: '', description: '', shortDescription: '', price: '', originalPrice: '', image: '', category: '', specs: '', warranty: '', rating: '5', stockStatus: 'In Stock', isHotDeal: false });
     const [newCategory, setNewCategory] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -34,7 +34,7 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
         onAddOffer({
             ...newOffer
         });
-        setNewOffer({ title: '', description: '', price: '', image: '', category: '', specs: '', warranty: '', isHotDeal: false });
+        setNewOffer({ title: '', description: '', shortDescription: '', price: '', originalPrice: '', image: '', category: '', specs: '', warranty: '', rating: '5', stockStatus: 'In Stock', isHotDeal: false });
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };
@@ -174,6 +174,17 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
+                                                <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Original Price (KM)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={newOffer.originalPrice}
+                                                    onChange={(e) => setNewOffer({ ...newOffer, originalPrice: e.target.value })}
+                                                    className="input-field"
+                                                    placeholder="Before discount"
+                                                />
+                                            </div>
+                                            <div>
                                                 <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Category</label>
                                                 <select
                                                     value={newOffer.category}
@@ -186,6 +197,49 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                     ))}
                                                 </select>
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Short Description</label>
+                                            <input
+                                                type="text"
+                                                value={newOffer.shortDescription}
+                                                onChange={(e) => setNewOffer({ ...newOffer, shortDescription: e.target.value })}
+                                                className="input-field"
+                                                placeholder="One-liner shown on the product card"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Rating (1-5)</label>
+                                                <select
+                                                    value={newOffer.rating}
+                                                    onChange={(e) => setNewOffer({ ...newOffer, rating: e.target.value })}
+                                                    className="input-field appearance-none cursor-pointer"
+                                                >
+                                                    <option value="5">⭐ 5</option>
+                                                    <option value="4.5">⭐ 4.5</option>
+                                                    <option value="4">⭐ 4</option>
+                                                    <option value="3.5">⭐ 3.5</option>
+                                                    <option value="3">⭐ 3</option>
+                                                    <option value="2.5">⭐ 2.5</option>
+                                                    <option value="2">⭐ 2</option>
+                                                    <option value="1">⭐ 1</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Stock Status</label>
+                                                <select
+                                                    value={newOffer.stockStatus}
+                                                    onChange={(e) => setNewOffer({ ...newOffer, stockStatus: e.target.value })}
+                                                    className="input-field appearance-none cursor-pointer"
+                                                >
+                                                    <option value="In Stock">✓ In Stock</option>
+                                                    <option value="Low Stock">⚠ Low Stock</option>
+                                                    <option value="Out of Stock">✗ Out of Stock</option>
+                                                </select>
+                                            </div>
                                             <div>
                                                 <label className="block text-xs uppercase text-zinc-500 mb-2 font-medium">Warranty</label>
                                                 <input
@@ -193,23 +247,24 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                     value={newOffer.warranty}
                                                     onChange={(e) => setNewOffer({ ...newOffer, warranty: e.target.value })}
                                                     className="input-field"
-                                                    placeholder="e.g. 1 year"
+                                                    placeholder="e.g. 2 years"
                                                 />
                                             </div>
-                                            <div className="flex items-end">
-                                                <label className={`flex items-center justify-center gap-3 w-full h-[52px] rounded-xl cursor-pointer transition-all border ${newOffer.isHotDeal
-                                                    ? 'bg-red-600/20 border-red-600/50 text-red-400'
-                                                    : 'bg-white/[0.02] border-white/5 text-zinc-500 hover:border-white/10'
-                                                    }`}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={newOffer.isHotDeal}
-                                                        onChange={(e) => setNewOffer({ ...newOffer, isHotDeal: e.target.checked })}
-                                                        className="hidden"
-                                                    />
-                                                    <span className="text-sm font-medium">🔥 Hot Deal</span>
-                                                </label>
-                                            </div>
+                                        </div>
+
+                                        <div className="flex items-end">
+                                            <label className={`flex items-center justify-center gap-3 w-full h-[52px] rounded-xl cursor-pointer transition-all border ${newOffer.isHotDeal
+                                                ? 'bg-red-600/20 border-red-600/50 text-red-400'
+                                                : 'bg-white/[0.02] border-white/5 text-zinc-500 hover:border-white/10'
+                                                }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={newOffer.isHotDeal}
+                                                    onChange={(e) => setNewOffer({ ...newOffer, isHotDeal: e.target.checked })}
+                                                    className="hidden"
+                                                />
+                                                <span className="text-sm font-medium">🔥 Hot Deal</span>
+                                            </label>
                                         </div>
 
                                         <div>

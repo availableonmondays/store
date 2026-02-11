@@ -1,187 +1,113 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 
-const Hero = () => {
-    const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
-    const [isHovering, setIsHovering] = useState(false);
-    const heroRef = useRef(null);
-    const textZoneRef = useRef(null);
-    const [textZone, setTextZone] = useState({ x: 0, y: 0, width: 0, height: 0 });
+const Hero = ({ offers = [], onProductClick }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
 
-    useEffect(() => {
-        const updateTextZone = () => {
-            if (textZoneRef.current && heroRef.current) {
-                const heroRect = heroRef.current.getBoundingClientRect();
-                const textRect = textZoneRef.current.getBoundingClientRect();
-                setTextZone({
-                    x: textRect.left - heroRect.left,
-                    y: textRect.top - heroRect.top,
-                    width: textRect.width,
-                    height: textRect.height
-                });
-            }
-        };
-        updateTextZone();
-        window.addEventListener('resize', updateTextZone);
-        return () => window.removeEventListener('resize', updateTextZone);
-    }, []);
+    const searchResults = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase();
+        return offers
+            .filter(o => o.title?.toLowerCase().includes(q) || o.category?.toLowerCase().includes(q))
+            .slice(0, 5);
+    }, [searchQuery, offers]);
 
-    const handleMouseMove = useCallback((e) => {
-        if (heroRef.current) {
-            const rect = heroRef.current.getBoundingClientRect();
-            setMousePos({
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            });
-        }
-    }, []);
+    const showDropdown = isFocused && searchQuery.trim().length > 0;
 
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => {
-        setIsHovering(false);
-        setMousePos({ x: -1000, y: -1000 });
-    };
-
-    const rows = 18;
-    const cols = 28;
+    const trustBadges = [
+        { icon: '🛡️', text: '2-Year Warranty' },
+        { icon: '💰', text: 'Cash on Delivery' },
+        { icon: '📍', text: 'Pickup in Sarajevo' },
+        { icon: '✅', text: 'Official Distributor' },
+    ];
 
     return (
-        <section
-            ref={heroRef}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        >
-            {/* Background */}
+        <section className="relative pt-32 pb-20 flex items-center justify-center overflow-hidden">
+            {/* Clean gradient bg — no SVGs, no dots, no mouse tracking */}
             <div
                 className="absolute inset-0 z-0"
                 style={{
-                    background: 'linear-gradient(180deg, #050505 0%, #0a0a0a 100%)'
+                    background: 'radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.08) 0%, transparent 60%), linear-gradient(180deg, #050505 0%, #0a0a0a 100%)'
                 }}
             />
 
-            {/* Dot Grid */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-                <svg className="w-full h-full">
-                    {Array.from({ length: rows * cols }, (_, i) => {
-                        const row = Math.floor(i / cols);
-                        const col = i % cols;
+            <div className="container relative z-10 text-center px-4 max-w-4xl mx-auto">
+                {/* Heading */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 leading-[1.1] text-white">
+                    Premium Gaming &<br />
+                    <span className="gradient-text-accent">Electronics</span>
+                </h1>
 
-                        const heroWidth = heroRef.current?.offsetWidth || 1200;
-                        const heroHeight = heroRef.current?.offsetHeight || 800;
+                <p className="text-base md:text-lg text-zinc-400 mb-10 max-w-2xl mx-auto">
+                    Official distributor in Sarajevo. Best prices, genuine products, 2-year warranty on everything.
+                </p>
 
-                        const dotX = (col / (cols - 1)) * heroWidth;
-                        const dotY = (row / (rows - 1)) * heroHeight;
+                {/* Search Bar */}
+                <div className="relative max-w-xl mx-auto mb-12">
+                    <div className="relative">
+                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                            placeholder="Search products..."
+                            className="w-full pl-12 pr-4 py-4 bg-[#0a0a0a] border border-white/10 rounded-2xl text-white text-base outline-none focus:border-red-600/50 transition-colors"
+                        />
+                    </div>
 
-                        const padding = 60;
-                        const isInTextZone =
-                            dotX > textZone.x - padding &&
-                            dotX < textZone.x + textZone.width + padding &&
-                            dotY > textZone.y - padding &&
-                            dotY < textZone.y + textZone.height + padding;
+                    {/* Search Dropdown */}
+                    {showDropdown && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl">
+                            {searchResults.length > 0 ? (
+                                searchResults.map(product => (
+                                    <button
+                                        key={product._id}
+                                        onClick={() => {
+                                            if (onProductClick) onProductClick(product);
+                                            setSearchQuery('');
+                                        }}
+                                        className="w-full flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors text-left"
+                                    >
+                                        <div className="w-10 h-10 bg-white/5 rounded-lg overflow-hidden flex-shrink-0">
+                                            {product.image ? (
+                                                <img src={product.image} alt="" className="w-full h-full object-contain" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-700 text-xs">—</div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-white truncate">{product.title}</p>
+                                            <p className="text-xs text-zinc-500">{product.category}</p>
+                                        </div>
+                                        <span className="text-sm font-bold text-red-500 flex-shrink-0">
+                                            {parseFloat(product.price || 0).toFixed(2)} KM
+                                        </span>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="px-4 py-6 text-center text-sm text-zinc-500">
+                                    No products found for "{searchQuery}"
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
-                        if (isInTextZone) return null;
-
-                        const dx = dotX - mousePos.x;
-                        const dy = dotY - mousePos.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-
-                        // Only fat when very close to cursor
-                        const maxDistance = 80;
-                        const influence = isHovering && distance < maxDistance ? Math.max(0, 1 - distance / maxDistance) : 0;
-
-                        // Smaller base, moderate max
-                        const baseSize = 1.5;
-                        const maxSize = 7;
-                        const size = baseSize + influence * (maxSize - baseSize);
-
-                        // Subtle opacity
-                        const baseOpacity = isHovering ? 0.1 : 0.03;
-                        const opacity = baseOpacity + influence * 0.6;
-
-                        return (
-                            <circle
-                                key={i}
-                                cx={dotX}
-                                cy={dotY}
-                                r={size}
-                                fill={`rgba(239, 68, 68, ${opacity})`}
-                                style={{ transition: 'r 0.25s ease-out, fill 0.25s ease-out' }}
-                            />
-                        );
-                    })}
-                </svg>
-            </div>
-
-            {/* Main Content */}
-            <div className="container relative z-10 text-center px-4">
-                <div ref={textZoneRef} className="inline-block">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight mb-8 leading-[0.9]"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                        <span className="block text-white">POWER</span>
-                        <span className="block">
-                            YOUR <span className="gradient-text-accent">PLAY</span>
-                        </span>
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed"
-                    >
-                        Discover elite gaming peripherals crafted for champions.
-                        <br className="hidden md:block" />
-                        Precision. Speed. Victory.
-                    </motion.p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                        className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-                    >
-                        <motion.a
-                            href="#offers"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="btn-primary"
-                        >
-                            <span>Shop Now</span>
-                        </motion.a>
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="btn-secondary"
-                        >
-                            View Collection
-                        </motion.button>
-                    </motion.div>
+                {/* Trust Badges */}
+                <div className="flex flex-wrap justify-center gap-3">
+                    {trustBadges.map((badge, i) => (
+                        <div key={i} className="trust-badge">
+                            <span>{badge.icon}</span>
+                            <span>{badge.text}</span>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            {/* Scroll Indicator */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-zinc-500"
-            >
-                <span className="text-xs uppercase tracking-widest">Scroll</span>
-                <motion.div
-                    animate={{ y: [0, 8, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="w-5 h-8 rounded-full border border-zinc-700 flex justify-center pt-2"
-                >
-                    <div className="w-1 h-2 bg-zinc-500 rounded-full" />
-                </motion.div>
-            </motion.div>
         </section>
     );
 };

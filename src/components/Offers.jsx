@@ -1,41 +1,65 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 
-const Offers = ({ offers, categories = [], onAddToCart }) => {
+const StarRating = ({ rating = 5 }) => {
+    const stars = [];
+    const r = Math.round(rating * 2) / 2; // round to nearest 0.5
+    for (let i = 1; i <= 5; i++) {
+        if (i <= r) {
+            stars.push(<span key={i} className="star-filled text-sm">★</span>);
+        } else {
+            stars.push(<span key={i} className="star-empty text-sm">★</span>);
+        }
+    }
+    return <div className="flex items-center gap-0.5">{stars}<span className="text-xs text-zinc-500 ml-1">({rating})</span></div>;
+};
+
+const StockBadge = ({ status = 'In Stock' }) => {
+    const config = {
+        'In Stock': { class: 'stock-in', icon: '✓', text: 'In Stock' },
+        'Low Stock': { class: 'stock-low', icon: '⚠', text: 'Low Stock' },
+        'Out of Stock': { class: 'stock-out', icon: '✗', text: 'Out of Stock' },
+    };
+    const c = config[status] || config['In Stock'];
+    return (
+        <span className={`${c.class} text-xs font-medium flex items-center gap-1`}>
+            <span>{c.icon}</span> {c.text}
+        </span>
+    );
+};
+
+const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [priceRange, setPriceRange] = useState([0, 5000]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [addedId, setAddedId] = useState(null);
 
-    // Helper to format price
     const formatPrice = (price) => {
         const num = parseFloat(price?.toString().replace(/[^0-9.]/g, '')) || 0;
         return num.toFixed(2);
     };
 
+    const getDiscount = (offer) => {
+        if (!offer.originalPrice || offer.originalPrice <= offer.price) return 0;
+        return Math.round(((offer.originalPrice - offer.price) / offer.originalPrice) * 100);
+    };
+
     // Hot Deals
-    const hotDeals = offers.filter(o => o.isHotDeal).slice(0, 2);
+    const hotDeals = offers.filter(o => o.isHotDeal);
 
     // Filter Logic
-    const filteredOffers = offers.filter(offer => {
-        const categoryMatch = selectedCategory === 'All' || offer.category === selectedCategory;
-        const priceValue = offer.price ? parseFloat(offer.price.toString().replace(/[^0-9.]/g, '')) : 0;
-        const priceMatch = priceValue >= priceRange[0] && priceValue <= priceRange[1];
-        return categoryMatch && priceMatch;
-    });
-
-    const handleMinChange = (e) => {
-        const value = Math.min(Number(e.target.value), priceRange[1] - 100);
-        setPriceRange([value, priceRange[1]]);
-    };
-
-    const handleMaxChange = (e) => {
-        const value = Math.max(Number(e.target.value), priceRange[0] + 100);
-        setPriceRange([priceRange[0], value]);
-    };
+    const filteredOffers = useMemo(() => {
+        return offers.filter(offer => {
+            const categoryMatch = selectedCategory === 'All' || offer.category === selectedCategory;
+            const priceValue = offer.price ? parseFloat(offer.price.toString().replace(/[^0-9.]/g, '')) : 0;
+            const priceMatch = priceValue >= priceRange[0] && priceValue <= priceRange[1];
+            const searchMatch = !searchQuery || offer.title?.toLowerCase().includes(searchQuery.toLowerCase());
+            return categoryMatch && priceMatch && searchMatch;
+        });
+    }, [offers, selectedCategory, priceRange, searchQuery]);
 
     const handleAddToCart = (e, offer) => {
         e.stopPropagation();
+        if (offer.stockStatus === 'Out of Stock') return;
         if (onAddToCart) {
             onAddToCart(offer);
             setAddedId(offer._id);
@@ -46,121 +70,127 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
     const minPercent = (priceRange[0] / 5000) * 100;
     const maxPercent = (priceRange[1] / 5000) * 100;
 
-    return (
-        <div className="bg-[#050505] relative noise-overlay">
-            <style>{`
-                .range-slider::-webkit-slider-thumb {
-                    pointer-events: auto;
-                    appearance: none;
-                    width: 18px;
-                    height: 18px;
-                    background: #dc2626;
-                    border: 2px solid white;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    margin-top: -7px;
-                    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
-                }
-                .range-slider::-moz-range-thumb {
-                    pointer-events: auto;
-                    width: 18px;
-                    height: 18px;
-                    background: #dc2626;
-                    border: 2px solid white;
-                    border-radius: 50%;
-                    cursor: pointer;
-                }
-                .range-slider::-webkit-slider-runnable-track {
-                    appearance: none;
-                    height: 4px;
-                    background: transparent;
-                }
-                @keyframes fire-border {
-                    0%, 100% { border-color: rgba(220, 38, 38, 0.6); box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(255, 165, 0, 0.2); }
-                    25% { border-color: rgba(255, 165, 0, 0.7); box-shadow: 0 0 25px rgba(255, 165, 0, 0.4), 0 0 50px rgba(220, 38, 38, 0.3); }
-                    50% { border-color: rgba(255, 215, 0, 0.6); box-shadow: 0 0 30px rgba(255, 215, 0, 0.3), 0 0 60px rgba(255, 165, 0, 0.2); }
-                    75% { border-color: rgba(255, 100, 0, 0.7); box-shadow: 0 0 25px rgba(255, 100, 0, 0.4), 0 0 50px rgba(220, 38, 38, 0.3); }
-                }
-                .hot-deal-card {
-                    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(255, 165, 0, 0.05) 50%, rgba(255, 215, 0, 0.08) 100%);
-                    border: 2px solid rgba(255, 165, 0, 0.3);
-                }
-                .hot-deal-card:hover {
-                    animation: fire-border 1.5s ease-in-out infinite;
-                }
-            `}</style>
+    // Category icons
+    const categoryIcons = {
+        'Gaming': '🎮', 'Keyboards': '⌨️', 'Mice': '🖱️', 'Headsets': '🎧',
+        'Laptops': '💻', 'Phones': '📱', 'Monitors': '🖥️', 'Accessories': '🔌',
+        'Consoles': '🕹️', 'Components': '🔧', 'Audio': '🔊', 'Storage': '💾',
+    };
 
+    return (
+        <div className="bg-[#050505]">
             {/* Hot Deals Section */}
             {hotDeals.length > 0 && (
-                <section className="py-16 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent" />
-                    <div className="container relative z-10">
-                        <div className="flex items-center gap-4 mb-10">
+                <section id="hot-deals" className="py-16 relative">
+                    <div className="container">
+                        <div className="flex items-center gap-4 mb-8">
                             <div className="flex items-center gap-3">
-                                <span className="flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-500 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-                                </span>
-                                <h3 className="text-2xl font-bold text-white uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+                                <span className="text-2xl">🔥</span>
+                                <h3 className="text-2xl font-bold text-white uppercase tracking-wider">
                                     Hot Deals
                                 </h3>
                             </div>
-                            <div className="h-px bg-gradient-to-r from-red-600/50 to-transparent flex-1" />
+                            <div className="h-px bg-white/10 flex-1" />
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {hotDeals.map((offer, i) => (
-                                <motion.div
-                                    key={'hot-' + offer._id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.1 }}
-                                    onClick={() => setSelectedProduct(offer)}
-                                    className="hot-deal-card group relative rounded-2xl p-6 cursor-pointer transition-all duration-500 overflow-hidden"
-                                >
-                                    {/* Fire gradient overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-orange-900/10 to-yellow-900/15 opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {hotDeals.map((offer) => {
+                                const discount = getDiscount(offer);
+                                return (
+                                    <div
+                                        key={'hot-' + offer._id}
+                                        onClick={() => setSelectedProduct(offer)}
+                                        className="product-card cursor-pointer border-red-600/20 relative"
+                                    >
+                                        {/* Discount Badge */}
+                                        {discount > 0 && (
+                                            <div className="absolute top-4 left-4 z-10 discount-badge">
+                                                🔥 -{discount}% OFF
+                                            </div>
+                                        )}
 
-                                    {/* Shimmer effect */}
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                                        <div className="absolute -inset-full bg-gradient-to-r from-transparent via-orange-500/10 to-transparent animate-[shimmer_2s_infinite]" style={{ transform: 'skewX(-20deg)' }} />
-                                    </div>
+                                        {/* Limited Badge */}
+                                        <div className="absolute top-4 right-4 z-10 text-[10px] font-bold uppercase text-red-400 bg-red-600/10 px-3 py-1 rounded-full tracking-wider">
+                                            Limited
+                                        </div>
 
-                                    <div className="absolute top-4 right-4 px-3 py-1 bg-red-600 text-white text-[10px] font-bold uppercase rounded-full tracking-wider shadow-lg shadow-red-900/30">
-                                        Limited
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row gap-6 relative z-10">
-                                        <div className="w-full md:w-40 h-40 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                        {/* Image */}
+                                        <div className="aspect-square bg-gradient-to-b from-white/[0.02] to-transparent p-6 flex items-center justify-center">
                                             {offer.image ? (
-                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" />
+                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" loading="lazy" />
                                             ) : (
-                                                <span className="text-zinc-700 text-xs">No Image</span>
+                                                <div className="text-zinc-700 text-sm">No Image</div>
                                             )}
                                         </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-xl font-bold text-white mb-2 group-hover:text-red-400 transition-colors">{offer.title}</h4>
-                                            <p className="text-sm text-zinc-500 mb-4 line-clamp-2">{offer.description || 'Premium gaming gear'}</p>
-                                            <div className="flex items-end justify-between">
-                                                <div>
-                                                    <span className="text-xs text-zinc-600 uppercase tracking-wider">Price</span>
-                                                    <p className="text-3xl font-black text-red-500" style={{ fontFamily: 'var(--font-display)' }}>
-                                                        {formatPrice(offer.price)} <span className="text-lg">KM</span>
-                                                    </p>
-                                                </div>
-                                                <motion.button
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    onClick={(e) => handleAddToCart(e, offer)}
-                                                    className="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-500 transition-colors"
-                                                >
-                                                    Add to Cart
-                                                </motion.button>
+
+                                        {/* Content */}
+                                        <div className="p-5 border-t border-white/5">
+                                            <h4 className="text-base font-bold text-white mb-1 line-clamp-2">{offer.title}</h4>
+                                            {offer.shortDescription && (
+                                                <p className="text-xs text-zinc-500 mb-2 line-clamp-1">{offer.shortDescription}</p>
+                                            )}
+
+                                            <div className="flex items-center justify-between mb-3">
+                                                <StarRating rating={offer.rating || 5} />
+                                                <StockBadge status={offer.stockStatus || 'In Stock'} />
                                             </div>
+
+                                            <div className="flex items-end gap-2 mb-4">
+                                                <span className="text-2xl font-bold text-red-500">{formatPrice(offer.price)} KM</span>
+                                                {offer.originalPrice > offer.price && (
+                                                    <span className="text-sm text-zinc-600 line-through">{formatPrice(offer.originalPrice)} KM</span>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={(e) => handleAddToCart(e, offer)}
+                                                disabled={offer.stockStatus === 'Out of Stock'}
+                                                className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors ${addedId === offer._id
+                                                        ? 'bg-green-600 text-white'
+                                                        : offer.stockStatus === 'Out of Stock'
+                                                            ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                                                            : 'bg-red-600 text-white hover:bg-red-500'
+                                                    }`}
+                                            >
+                                                {addedId === offer._id ? '✓ Added!' : offer.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                                            </button>
                                         </div>
                                     </div>
-                                </motion.div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Category Grid */}
+            {categories.length > 0 && (
+                <section className="py-12 px-4">
+                    <div className="container">
+                        <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-6">Browse Categories</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            <button
+                                onClick={() => setSelectedCategory('All')}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${selectedCategory === 'All'
+                                        ? 'bg-red-600/10 border-red-600/30 text-white'
+                                        : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
+                                    }`}
+                            >
+                                <span className="text-2xl">🏪</span>
+                                <span className="text-xs font-medium">All</span>
+                            </button>
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${selectedCategory === cat
+                                            ? 'bg-red-600/10 border-red-600/30 text-white'
+                                            : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="text-2xl">{categoryIcons[cat] || '📦'}</span>
+                                    <span className="text-xs font-medium">{cat}</span>
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -171,79 +201,43 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
             <section className="py-16 px-4" id="offers">
                 <div className="container">
                     {/* Section Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="text-center mb-12"
-                    >
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                            Our <span className="gradient-text-accent">Collection</span>
-                        </h2>
-                        <p className="text-zinc-500 max-w-xl mx-auto">
-                            Handpicked premium gear for the most demanding gamers
-                        </p>
-                    </motion.div>
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+                        <div>
+                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                                Our <span className="gradient-text-accent">Collection</span>
+                            </h2>
+                            <p className="text-zinc-500 text-sm">{filteredOffers.length} products available</p>
+                        </div>
 
-                    {/* Filters */}
-                    <div className="mb-10 space-y-6">
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                            {/* Category Tabs */}
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full lg:w-auto">
-                                <button
-                                    onClick={() => setSelectedCategory('All')}
-                                    className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === 'All'
-                                        ? 'bg-white text-black'
-                                        : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
-                                        }`}
-                                >
-                                    All Products
-                                </button>
-                                {categories.map(cat => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => setSelectedCategory(cat)}
-                                        className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
-                                            ? 'bg-white text-black'
-                                            : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
-                                            }`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Price Filter */}
-                            <div className="w-full lg:w-auto">
-                                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 w-full lg:w-[400px]">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Price Range</span>
-                                        <span className="text-sm font-bold text-white">
-                                            {priceRange[0]} - {priceRange[1]} <span className="text-red-500">KM</span>
-                                        </span>
-                                    </div>
-
-                                    <div className="relative h-5 flex items-center">
-                                        <div className="absolute w-full h-1 bg-zinc-800 rounded-full" />
-                                        <div
-                                            className="absolute h-1 bg-gradient-to-r from-red-600 to-red-500 rounded-full"
-                                            style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
-                                        />
-                                        <input
-                                            type="range"
-                                            min="0" max="5000" step="50"
-                                            value={priceRange[0]}
-                                            onChange={handleMinChange}
-                                            className="range-slider absolute w-full h-full appearance-none bg-transparent pointer-events-none z-10"
-                                        />
-                                        <input
-                                            type="range"
-                                            min="0" max="5000" step="50"
-                                            value={priceRange[1]}
-                                            onChange={handleMaxChange}
-                                            className="range-slider absolute w-full h-full appearance-none bg-transparent pointer-events-none z-20"
-                                        />
-                                    </div>
+                        {/* Price Filter */}
+                        <div className="w-full lg:w-auto">
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 w-full lg:w-[360px]">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Price Range</span>
+                                    <span className="text-sm font-bold text-white">
+                                        {priceRange[0]} - {priceRange[1]} <span className="text-red-500">KM</span>
+                                    </span>
+                                </div>
+                                <div className="relative h-5 flex items-center">
+                                    <div className="absolute w-full h-1 bg-zinc-800 rounded-full" />
+                                    <div
+                                        className="absolute h-1 bg-red-600 rounded-full"
+                                        style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
+                                    />
+                                    <input
+                                        type="range" min="0" max="5000" step="50"
+                                        value={priceRange[0]}
+                                        onChange={(e) => setPriceRange([Math.min(Number(e.target.value), priceRange[1] - 100), priceRange[1]])}
+                                        className="range-slider absolute w-full h-full appearance-none bg-transparent pointer-events-none z-10"
+                                        style={{ pointerEvents: 'auto' }}
+                                    />
+                                    <input
+                                        type="range" min="0" max="5000" step="50"
+                                        value={priceRange[1]}
+                                        onChange={(e) => setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0] + 100)])}
+                                        className="range-slider absolute w-full h-full appearance-none bg-transparent pointer-events-none z-20"
+                                        style={{ pointerEvents: 'auto' }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -262,179 +256,174 @@ const Offers = ({ offers, categories = [], onAddToCart }) => {
                             <p className="text-sm text-zinc-600 mt-1">Try adjusting your filters</p>
                         </div>
                     ) : (
-                        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                            <AnimatePresence mode="popLayout">
-                                {filteredOffers.map((offer, i) => (
-                                    <motion.div
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            {filteredOffers.map((offer) => {
+                                const discount = getDiscount(offer);
+                                return (
+                                    <div
                                         key={offer._id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ delay: i * 0.03 }}
                                         onClick={() => setSelectedProduct(offer)}
-                                        className="group relative bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden cursor-pointer card-hover hover:border-white/10"
+                                        className="product-card cursor-pointer relative"
                                     >
+                                        {/* Discount Badge */}
+                                        {discount > 0 && (
+                                            <div className="absolute top-4 left-4 z-10 discount-badge">
+                                                -{discount}%
+                                            </div>
+                                        )}
+
                                         {/* Image */}
-                                        <div className="aspect-square bg-gradient-to-b from-white/[0.02] to-transparent p-6 relative overflow-hidden">
+                                        <div className="aspect-square bg-gradient-to-b from-white/[0.02] to-transparent p-6 flex items-center justify-center">
                                             {offer.image ? (
-                                                <img
-                                                    src={offer.image}
-                                                    alt={offer.title}
-                                                    className="w-full h-full object-contain"
-                                                    loading="lazy"
-                                                />
+                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" loading="lazy" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-zinc-700">No Image</div>
                                             )}
-
-                                            {/* Category Tag removed from image - moving to details */}
-
-                                            {/* Quick Add Button */}
-                                            <motion.button
-                                                initial={{ opacity: 0, y: 10 }}
-                                                whileHover={{ scale: 1.05 }}
-                                                onClick={(e) => handleAddToCart(e, offer)}
-                                                className={`absolute bottom-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${addedId === offer._id
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-white/10 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600'
-                                                    }`}
-                                            >
-                                                {addedId === offer.id ? (
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M20 6L9 17l-5-5" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <circle cx="9" cy="21" r="1" />
-                                                        <circle cx="20" cy="21" r="1" />
-                                                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                                                    </svg>
-                                                )}
-                                            </motion.button>
                                         </div>
 
                                         {/* Content */}
-                                        <div className="p-5">
-                                            <h4 className="text-base font-semibold text-white mb-2 line-clamp-2 transition-colors">
-                                                {offer.title}
-                                            </h4>
+                                        <div className="p-5 border-t border-white/5">
+                                            <h4 className="text-sm font-bold text-white mb-1 line-clamp-2">{offer.title}</h4>
+                                            {offer.shortDescription && (
+                                                <p className="text-xs text-zinc-500 mb-2 line-clamp-1">{offer.shortDescription}</p>
+                                            )}
 
-                                            <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                                <div>
-                                                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider">Price</span>
-                                                    <p className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                                                        {formatPrice(offer.price)} <span className="text-sm text-red-500">KM</span>
-                                                    </p>
-                                                </div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <StarRating rating={offer.rating || 5} />
+                                                <StockBadge status={offer.stockStatus || 'In Stock'} />
                                             </div>
+
+                                            <div className="flex items-end gap-2 mb-4">
+                                                <span className="text-xl font-bold text-white">{formatPrice(offer.price)} <span className="text-sm text-red-500">KM</span></span>
+                                                {offer.originalPrice > offer.price && (
+                                                    <span className="text-xs text-zinc-600 line-through">{formatPrice(offer.originalPrice)}</span>
+                                                )}
+                                            </div>
+
+                                            {/* Always visible Add to Cart */}
+                                            <button
+                                                onClick={(e) => handleAddToCart(e, offer)}
+                                                disabled={offer.stockStatus === 'Out of Stock'}
+                                                className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors ${addedId === offer._id
+                                                        ? 'bg-green-600 text-white'
+                                                        : offer.stockStatus === 'Out of Stock'
+                                                            ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                                                            : 'bg-white/5 border border-white/10 text-white hover:bg-red-600 hover:border-red-600'
+                                                    }`}
+                                            >
+                                                {addedId === offer._id ? '✓ Added!' : offer.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                                            </button>
                                         </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </motion.div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             </section>
 
             {/* Product Detail Modal */}
-            <AnimatePresence>
-                {selectedProduct && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-                    >
-                        <div
+            {selectedProduct && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div
+                        onClick={() => setSelectedProduct(null)}
+                        className="absolute inset-0 bg-black/70"
+                    />
+                    <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl relative z-10 grid grid-cols-1 md:grid-cols-2 text-black animate-fade-in">
+                        <button
                             onClick={() => setSelectedProduct(null)}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl relative z-10 grid grid-cols-1 md:grid-cols-2 text-black"
+                            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
                         >
-                            <button
-                                onClick={() => setSelectedProduct(null)}
-                                className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
-                            </button>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                        </button>
 
-                            {/* Image Section */}
-                            <div className="bg-white p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                                {selectedProduct.image && (
-                                    <img
-                                        src={selectedProduct.image}
-                                        alt={selectedProduct.title}
-                                        className="max-w-full max-h-[50vh] object-contain"
-                                    />
+                        {/* Image Section */}
+                        <div className="bg-white p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                            {selectedProduct.image ? (
+                                <img src={selectedProduct.image} alt={selectedProduct.title} className="max-w-full max-h-[50vh] object-contain" />
+                            ) : (
+                                <div className="text-gray-400 text-lg">No Image</div>
+                            )}
+                        </div>
+
+                        {/* Details Section */}
+                        <div className="p-8 md:p-10 flex flex-col">
+                            <h1 className="text-2xl md:text-3xl font-bold text-black mb-3">{selectedProduct.title}</h1>
+
+                            {/* Meta Row */}
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-500 mb-4">
+                                <span><strong className="text-black">Kategorija:</strong> {selectedProduct.category || 'N/A'}</span>
+                                <span><strong className="text-black">Garancija:</strong> {selectedProduct.warranty || '1 godina'}</span>
+                            </div>
+
+                            {/* Rating & Stock */}
+                            <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
+                                <StarRating rating={selectedProduct.rating || 5} />
+                                <StockBadge status={selectedProduct.stockStatus || 'In Stock'} />
+                            </div>
+
+                            {/* Price */}
+                            <div className="mb-6">
+                                <div className="flex items-end gap-3">
+                                    <span className="text-4xl md:text-5xl font-bold text-[#dc2626]">{formatPrice(selectedProduct.price)} KM</span>
+                                    {selectedProduct.originalPrice > selectedProduct.price && (
+                                        <span className="text-lg text-gray-400 line-through mb-1">{formatPrice(selectedProduct.originalPrice)} KM</span>
+                                    )}
+                                </div>
+                                {getDiscount(selectedProduct) > 0 && (
+                                    <p className="text-sm text-green-600 mt-1 font-medium">You save {(selectedProduct.originalPrice - selectedProduct.price).toFixed(2)} KM (-{getDiscount(selectedProduct)}%)</p>
                                 )}
                             </div>
 
-                            {/* Details Section - Custom Design */}
-                            <div className="p-10 flex flex-col font-sans">
-                                {/* Title */}
-                                <h1 className="text-3xl font-normal text-black mb-4">
-                                    {selectedProduct.title}
-                                </h1>
+                            {/* Description */}
+                            {selectedProduct.description && (
+                                <p className="text-gray-600 leading-relaxed mb-6">{selectedProduct.description}</p>
+                            )}
 
-                                {/* Meta Row */}
-                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 mb-6">
-                                    <span className="font-bold text-black">Kategorija: <span className="font-normal text-gray-600">{selectedProduct.category || 'N/A'}</span></span>
-                                    <span className="font-bold text-black">SKU: <span className="font-normal text-gray-600">{selectedProduct._id.slice(0, 6)}</span></span>
-                                    <span className="font-bold text-black">Garancija: <span className="font-normal text-gray-600">{selectedProduct.warranty || '1 godina'}</span></span>
-                                </div>
-
-                                {/* Availability Check */}
-                                <div className="flex items-center gap-2 text-sm text-black mb-8 pb-8 border-b border-gray-100">
-                                    <span>Potrebna provjera dostupnosti</span>
-                                    <div className="w-4 h-4 rounded-full bg-orange-400 text-white flex items-center justify-center text-[10px] font-bold">?</div>
-                                </div>
-
-                                {/* Price */}
-                                <div className="mb-8">
-                                    <p className="text-5xl font-bold text-[#dc2626] tracking-tight">
-                                        {formatPrice(selectedProduct.price)} KM
-                                    </p>
-                                    <p className="text-gray-500 mt-1 text-sm">
-                                        (Cijena sa popustom za gotovinsko plaćanje)
-                                    </p>
-                                </div>
-
-                                {/* Specs with Blue Bullets */}
-                                {selectedProduct.specs && (
-                                    <div className="space-y-3 mb-10">
+                            {/* Specs */}
+                            {selectedProduct.specs && (
+                                <div className="mb-6">
+                                    <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-3">Specifications</h4>
+                                    <div className="space-y-2">
                                         {selectedProduct.specs.split('\n').map((spec, i) => (
                                             <div key={i} className="flex items-start gap-3">
                                                 <div className="w-2 h-2 mt-2 rounded-full bg-[#0ea5e9] flex-shrink-0" />
-                                                <span className="text-gray-600">{spec}</span>
+                                                <span className="text-gray-600 text-sm">{spec}</span>
                                             </div>
                                         ))}
                                     </div>
-                                )}
-
-                                {/* Buttons */}
-                                <div className="mt-auto flex gap-4">
-                                    <button
-                                        onClick={(e) => {
-                                            handleAddToCart(e, selectedProduct);
-                                            setSelectedProduct(null);
-                                        }}
-                                        className="flex-1 bg-black text-white py-4 rounded-lg font-bold text-lg hover:bg-zinc-800 transition-colors uppercase tracking-wider"
-                                    >
-                                        Add to Cart
-                                    </button>
                                 </div>
+                            )}
+
+                            {/* Trust Signals */}
+                            <div className="flex flex-wrap gap-3 mb-6 text-xs text-gray-500">
+                                <span className="flex items-center gap-1">🛡️ 2-Year Warranty</span>
+                                <span className="flex items-center gap-1">💰 Cash on Delivery</span>
+                                <span className="flex items-center gap-1">📍 Pickup in Sarajevo</span>
                             </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
+                            {/* CTA */}
+                            <div className="mt-auto">
+                                <button
+                                    onClick={(e) => {
+                                        handleAddToCart(e, selectedProduct);
+                                        setSelectedProduct(null);
+                                    }}
+                                    disabled={selectedProduct.stockStatus === 'Out of Stock'}
+                                    className={`w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-colors ${selectedProduct.stockStatus === 'Out of Stock'
+                                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                            : 'bg-black text-white hover:bg-zinc-800'
+                                        }`}
+                                >
+                                    {selectedProduct.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
