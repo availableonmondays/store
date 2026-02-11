@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCategories, onClose, onLogout }) => {
+const AdminPanel = ({ offers, categories, onAddOffer, onUpdateOffer, onDeleteOffer, onUpdateCategories, onClose, onLogout }) => {
     const [activeTab, setActiveTab] = useState('add');
+    const [editingId, setEditingId] = useState(null);
     const [newOffer, setNewOffer] = useState({ title: '', description: '', shortDescription: '', price: '', originalPrice: '', image: '', category: '', specs: '', warranty: '', rating: '5', stockStatus: 'In Stock', isHotDeal: false });
     const [newCategory, setNewCategory] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
@@ -31,12 +32,44 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
         e.preventDefault();
         if (!newOffer.title) return;
 
-        onAddOffer({
-            ...newOffer
-        });
+        if (editingId) {
+            onUpdateOffer(editingId, newOffer);
+            setShowSuccess(true); // Re-using success for update too
+        } else {
+            onAddOffer({
+                ...newOffer
+            });
+            setShowSuccess(true);
+        }
+
+        // Reset
         setNewOffer({ title: '', description: '', shortDescription: '', price: '', originalPrice: '', image: '', category: '', specs: '', warranty: '', rating: '5', stockStatus: 'In Stock', isHotDeal: false });
-        setShowSuccess(true);
+        setEditingId(null);
         setTimeout(() => setShowSuccess(false), 2000);
+    };
+
+    const handleEdit = (offer) => {
+        setNewOffer({
+            title: offer.title || '',
+            description: offer.description || '',
+            shortDescription: offer.shortDescription || '',
+            price: offer.price || '',
+            originalPrice: offer.originalPrice || '',
+            image: offer.image || '',
+            category: offer.category || '',
+            specs: offer.specs || '',
+            warranty: offer.warranty || '',
+            rating: offer.rating || '5',
+            stockStatus: offer.stockStatus || 'In Stock',
+            isHotDeal: offer.isHotDeal || false,
+        });
+        setEditingId(offer._id);
+        setActiveTab('add');
+    };
+
+    const cancelEdit = () => {
+        setNewOffer({ title: '', description: '', shortDescription: '', price: '', originalPrice: '', image: '', category: '', specs: '', warranty: '', rating: '5', stockStatus: 'In Stock', isHotDeal: false });
+        setEditingId(null);
     };
 
     const handleAddCategory = (e) => {
@@ -142,9 +175,22 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                             >
                                 {/* Add Form */}
                                 <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <div className="w-1 h-5 bg-red-600 rounded-full" />
-                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Add New Product</h3>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-1 h-5 rounded-full ${editingId ? 'bg-amber-500' : 'bg-red-600'}`} />
+                                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                                                {editingId ? 'Edit Product' : 'Add New Product'}
+                                            </h3>
+                                        </div>
+                                        {editingId && (
+                                            <button
+                                                type="button"
+                                                onClick={cancelEdit}
+                                                className="text-xs text-zinc-500 hover:text-white underline"
+                                            >
+                                                Cancel Edit
+                                            </button>
+                                        )}
                                     </div>
 
                                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -302,7 +348,7 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                     className="flex items-center justify-center gap-3 w-full h-24 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-red-500/50 transition-colors"
                                                 >
                                                     {newOffer.image ? (
-                                                        <img src={newOffer.image} alt="Preview" className="h-full object-contain rounded-lg" />
+                                                        <img src={newOffer.image} alt="Preview" className="h-full object-contain rounded-xl" />
                                                     ) : (
                                                         <div className="text-center">
                                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="1.5" className="mx-auto mb-2">
@@ -321,9 +367,12 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             type="submit"
-                                            className="w-full btn-primary py-4 rounded-xl font-bold tracking-wider"
+                                            className={`w-full py-4 rounded-xl font-bold tracking-wider transition-colors ${editingId
+                                                ? 'bg-amber-500 text-black hover:bg-amber-400'
+                                                : 'btn-primary'
+                                                }`}
                                         >
-                                            <span>Add Product</span>
+                                            <span>{editingId ? 'Update Product' : 'Add Product'}</span>
                                         </motion.button>
                                     </form>
 
@@ -339,7 +388,7 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <path d="M20 6L9 17l-5-5" />
                                                 </svg>
-                                                Product added successfully!
+                                                {editingId ? 'Product updated successfully!' : 'Product added successfully!'}
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -364,7 +413,7 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                     exit={{ opacity: 0, scale: 0.9, x: -20 }}
                                                     className="group flex items-center gap-4 p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all"
                                                 >
-                                                    <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden flex-shrink-0">
+                                                    <div className="w-12 h-12 bg-white/5 rounded-xl overflow-hidden flex-shrink-0">
                                                         {offer.image ? (
                                                             <img src={offer.image} className="w-full h-full object-contain" alt="" />
                                                         ) : (
@@ -382,16 +431,29 @@ const AdminPanel = ({ offers, categories, onAddOffer, onDeleteOffer, onUpdateCat
                                                             {offer.price} KM • {offer.category || 'No category'}
                                                         </p>
                                                     </div>
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.1 }}
-                                                        whileTap={{ scale: 0.9 }}
-                                                        onClick={() => onDeleteOffer(offer._id)}
-                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:bg-red-600/20 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
-                                                    >
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                                                        </svg>
-                                                    </motion.button>
+                                                    <div className="flex items-center gap-1">
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.1 }}
+                                                            whileTap={{ scale: 0.9 }}
+                                                            onClick={() => handleEdit(offer)}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:bg-amber-500/20 hover:text-amber-400 transition-all opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                            </svg>
+                                                        </motion.button>
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.1 }}
+                                                            whileTap={{ scale: 0.9 }}
+                                                            onClick={() => onDeleteOffer(offer._id)}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:bg-red-600/20 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                                            </svg>
+                                                        </motion.button>
+                                                    </div>
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>

@@ -73,7 +73,7 @@ const Hero = ({ offers = [], onProductClick }) => {
                                         }}
                                         className="w-full flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors text-left"
                                     >
-                                        <div className="w-10 h-10 bg-white/5 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="w-10 h-10 bg-white/5 rounded-xl overflow-hidden flex-shrink-0">
                                             {product.image ? (
                                                 <img src={product.image} alt="" className="w-full h-full object-contain" />
                                             ) : (

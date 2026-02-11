@@ -19,6 +19,7 @@ function App() {
   // Convex
   const offers = useQuery(api.products.get) || [];
   const addProduct = useMutation(api.products.add);
+  const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
 
   const [categories, setCategories] = useState(() => {
@@ -69,6 +70,20 @@ function App() {
       });
     } catch (error) {
       console.error("Failed to add product:", error);
+    }
+  };
+
+  const updateOffer = async (id, updates) => {
+    try {
+      await updateProduct({
+        id,
+        ...updates,
+        price: parseFloat(updates.price) || 0,
+        originalPrice: parseFloat(updates.originalPrice) || 0,
+        rating: parseFloat(updates.rating) || 5,
+      });
+    } catch (error) {
+      console.error("Failed to update product:", error);
     }
   };
 
@@ -169,6 +184,7 @@ function App() {
             offers={offers}
             categories={categories}
             onAddOffer={addOffer}
+            onUpdateOffer={updateOffer}
             onDeleteOffer={deleteOffer}
             onUpdateCategories={setCategories}
             onClose={() => setShowAdmin(false)}
