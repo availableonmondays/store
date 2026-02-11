@@ -17,7 +17,7 @@ const Header = ({ onLoginClick, cartItemCount = 0, onCartClick }) => {
         >
             <div className="container">
                 <div className={`flex justify-between items-center px-6 py-3 rounded-2xl transition-all duration-300 ${scrolled
-                    ? 'bg-black/95 border border-white/5 shadow-lg'
+                    ? 'bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50'
                     : 'bg-transparent'
                     }`}>
                     {/* Logo */}

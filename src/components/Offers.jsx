@@ -85,12 +85,12 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                     <div className="container">
                         <div className="flex items-center gap-4 mb-8">
                             <div className="flex items-center gap-3">
-                                <span className="text-2xl">🔥</span>
-                                <h3 className="text-2xl font-bold text-white uppercase tracking-wider">
+                                <span className="text-2xl animate-subtle-float">🔥</span>
+                                <h3 className="text-2xl font-bold gradient-text-gold uppercase tracking-wider">
                                     Hot Deals
                                 </h3>
                             </div>
-                            <div className="h-px bg-white/10 flex-1" />
+                            <div className="h-px bg-gradient-to-r from-amber-500/30 to-transparent flex-1" />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -100,24 +100,24 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                     <div
                                         key={'hot-' + offer._id}
                                         onClick={() => setSelectedProduct(offer)}
-                                        className="product-card cursor-pointer border-red-600/20 relative"
+                                        className="hot-deal-card animate-shimmer-gold animate-pulse-border cursor-pointer relative"
                                     >
                                         {/* Discount Badge */}
                                         {discount > 0 && (
-                                            <div className="absolute top-4 left-4 z-10 discount-badge">
+                                            <div className="absolute top-4 left-4 z-10 discount-badge-gold">
                                                 🔥 -{discount}% OFF
                                             </div>
                                         )}
 
                                         {/* Limited Badge */}
-                                        <div className="absolute top-4 right-4 z-10 text-[10px] font-bold uppercase text-red-400 bg-red-600/10 px-3 py-1 rounded-full tracking-wider">
+                                        <div className="absolute top-4 right-4 z-10 text-[10px] font-bold uppercase text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full tracking-wider border border-amber-500/20">
                                             Limited
                                         </div>
 
                                         {/* Image */}
                                         <div className="aspect-square bg-gradient-to-b from-white/[0.02] to-transparent p-6 flex items-center justify-center">
                                             {offer.image ? (
-                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" loading="lazy" />
+                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain rounded-2xl" loading="lazy" />
                                             ) : (
                                                 <div className="text-zinc-700 text-sm">No Image</div>
                                             )}
@@ -136,7 +136,7 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                             </div>
 
                                             <div className="flex items-end gap-2 mb-4">
-                                                <span className="text-2xl font-bold text-red-500">{formatPrice(offer.price)} KM</span>
+                                                <span className="text-2xl font-bold text-amber-400">{formatPrice(offer.price)} KM</span>
                                                 {offer.originalPrice > offer.price && (
                                                     <span className="text-sm text-zinc-600 line-through">{formatPrice(offer.originalPrice)} KM</span>
                                                 )}
@@ -146,13 +146,13 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                                 onClick={(e) => handleAddToCart(e, offer)}
                                                 disabled={offer.stockStatus === 'Out of Stock'}
                                                 className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors ${addedId === offer._id
-                                                        ? 'bg-green-600 text-white'
-                                                        : offer.stockStatus === 'Out of Stock'
-                                                            ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                                                            : 'bg-red-600 text-white hover:bg-red-500'
+                                                    ? 'bg-green-600 text-white'
+                                                    : offer.stockStatus === 'Out of Stock'
+                                                        ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                                                        : 'bg-gradient-to-r from-amber-500 to-orange-600 text-black hover:from-amber-400 hover:to-orange-500'
                                                     }`}
                                             >
-                                                {addedId === offer._id ? '✓ Added!' : offer.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                                                {addedId === offer._id ? '✓ Added!' : offer.stockStatus === 'Out of Stock' ? 'Out of Stock' : '⚡ Grab This Deal'}
                                             </button>
                                         </div>
                                     </div>
@@ -172,8 +172,8 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                             <button
                                 onClick={() => setSelectedCategory('All')}
                                 className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${selectedCategory === 'All'
-                                        ? 'bg-red-600/10 border-red-600/30 text-white'
-                                        : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
+                                    ? 'bg-red-600/10 border-red-600/30 text-white'
+                                    : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
                                     }`}
                             >
                                 <span className="text-2xl">🏪</span>
@@ -184,8 +184,8 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${selectedCategory === cat
-                                            ? 'bg-red-600/10 border-red-600/30 text-white'
-                                            : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
+                                        ? 'bg-red-600/10 border-red-600/30 text-white'
+                                        : 'bg-white/[0.02] border-white/5 text-zinc-400 hover:border-white/10 hover:text-white'
                                         }`}
                                 >
                                     <span className="text-2xl">{categoryIcons[cat] || '📦'}</span>
@@ -275,7 +275,7 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                         {/* Image */}
                                         <div className="aspect-square bg-gradient-to-b from-white/[0.02] to-transparent p-6 flex items-center justify-center">
                                             {offer.image ? (
-                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain" loading="lazy" />
+                                                <img src={offer.image} alt={offer.title} className="w-full h-full object-contain rounded-2xl" loading="lazy" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-zinc-700">No Image</div>
                                             )}
@@ -305,10 +305,10 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                                 onClick={(e) => handleAddToCart(e, offer)}
                                                 disabled={offer.stockStatus === 'Out of Stock'}
                                                 className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors ${addedId === offer._id
-                                                        ? 'bg-green-600 text-white'
-                                                        : offer.stockStatus === 'Out of Stock'
-                                                            ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                                                            : 'bg-white/5 border border-white/10 text-white hover:bg-red-600 hover:border-red-600'
+                                                    ? 'bg-green-600 text-white'
+                                                    : offer.stockStatus === 'Out of Stock'
+                                                        ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                                                        : 'bg-white/5 border border-white/10 text-white hover:bg-red-600 hover:border-red-600'
                                                     }`}
                                             >
                                                 {addedId === offer._id ? '✓ Added!' : offer.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
@@ -342,7 +342,7 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                         {/* Image Section */}
                         <div className="bg-white p-12 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
                             {selectedProduct.image ? (
-                                <img src={selectedProduct.image} alt={selectedProduct.title} className="max-w-full max-h-[50vh] object-contain" />
+                                <img src={selectedProduct.image} alt={selectedProduct.title} className="max-w-full max-h-[50vh] object-contain rounded-2xl" />
                             ) : (
                                 <div className="text-gray-400 text-lg">No Image</div>
                             )}
@@ -413,8 +413,8 @@ const Offers = ({ offers, categories = [], onAddToCart, searchQuery = '' }) => {
                                     }}
                                     disabled={selectedProduct.stockStatus === 'Out of Stock'}
                                     className={`w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-colors ${selectedProduct.stockStatus === 'Out of Stock'
-                                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                            : 'bg-black text-white hover:bg-zinc-800'
+                                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                        : 'bg-black text-white hover:bg-zinc-800'
                                         }`}
                                 >
                                     {selectedProduct.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}

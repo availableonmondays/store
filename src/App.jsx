@@ -180,9 +180,7 @@ function App() {
       <footer className="bg-[#030303] py-16 border-t border-white/5">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
+            <img src="/gemeos-logo.png" alt="Gemeos" className="w-8 h-8 rounded-lg" />
             <span className="text-xl font-bold text-white tracking-tight">GEMEOS</span>
           </div>
           <p className="text-xs text-zinc-600 uppercase tracking-widest mb-2">Premium Gaming & Electronics</p>
